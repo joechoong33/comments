@@ -6,13 +6,7 @@ library(tm)
 library(networkD3)
 library(visNetwork)
 library(data.tree)
-library("SnowballC")  
-library("wordcloud")
-library("RColorBrewer")
 library(igraph)
-
-#setwd('D:/Downloads_D/comments2')
-#setwd('C:/Users/choong.koon.wai.joe/Desktop/load')
 
 dflike <- read.csv('wl500.csv',header=T,stringsAsFactors = F)
 dflike <- dflike[dflike$a != 'wish',]
@@ -34,30 +28,6 @@ dfSearch$Date <- as.Date(dfSearch$Date)
 #dfSearch$Date <- as.Date(dfSearch$Date, format="%d/%m/%Y")
 #### Server ####
 server <- function(input, output,session) {
-  
-  #df <- read.csv('w1500.csv',header=T,stringsAsFactors = F)
-  #wordss <- df %>% select(a) %>% unique()
-  word = reactive({
-    dflike <- read.csv('wl500.csv',header=T,stringsAsFactors = F)
-    dflike <- dflike[dflike$a != 'wish',]
-    #wordcloud
-    docs <- VCorpus(VectorSource(dflike))
-    dtm <- TermDocumentMatrix(docs)
-    m <- as.matrix(dtm)
-    v = sort(rowSums(m),decreasing = TRUE)
-    data.frame(word=names(v),freq=v)$word
-  })
-  
-  freq = reactive({
-    dflike <- read.csv('wl500.csv',header=T,stringsAsFactors = F)
-    dflike <- dflike[dflike$a != 'wish',]
-    #wordcloud
-    docs <- VCorpus(VectorSource(dflike))
-    dtm <- TermDocumentMatrix(docs)
-    m = as.matrix(dtm)
-    v = sort(rowSums(m),decreasing = TRUE)
-    data.frame(word=names(v),freq=v)$freq
-  })
   
  net1 = reactive({
    dfnet <- read.csv('ng.csv',header=T,stringsAsFactors = F)
@@ -191,23 +161,6 @@ server <- function(input, output,session) {
                                                         opacity = 0.9)#input$opaci)
   })
   
-  output$wordcloud <- renderPlot({
-    wordcloud(words = word(), 
-              freq = freq(), 
-              min.freq = 1, scale = c(8,0.8),
-              max.words=input$max, random.order=FALSE, rot.per=0.35, 
-              colors=brewer.pal(8, "Dark2"))
-  })
-  
-  output$wordplot <- renderPlot({ 
-     numwords = as.integer(input$max/2)
-     barplot(freq()[1:numwords], las = 2, names.arg = word()[1:numwords],
-             col ="gold", main ="Most frequent words",
-             ylab = "Word frequencies")
-     })
-  
- 
-  
   output$search <- renderTable(searchfunc())
   
   output$network <- renderVisNetwork({
@@ -233,7 +186,7 @@ server <- function(input, output,session) {
                                                                 
       #visGroups(groupname = "like", shape = "icon", icon = icon("thumbs-up"),size=30) %>% 
                                                                 
-      addFontAwesome() %>%
+      #addFontAwesome() %>%
      
       visOptions(highlightNearest = TRUE, selectedBy = "group") %>%
       visEdges(arrows = "middle")
@@ -294,8 +247,6 @@ ui <- shinyUI(fluidPage(
           tabsetPanel(
             tabPanel("Diagonal Network", diagonalNetworkOutput("diag")),
             tabPanel("Search Details",tableOutput("search")),
-            tabPanel("Wordcloud",plotOutput("wordcloud", height = "400px"),plotOutput("wordplot", height = "400px",
-                                                                                      width="100%")),
             tabPanel("Network Graph",visNetworkOutput("network",height = "750px"))
             
           )
